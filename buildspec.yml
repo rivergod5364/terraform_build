@@ -1,0 +1,21 @@
+version: 0.2
+
+phases:
+  install:
+    commands:
+      - yum install unzip -y
+      - wget https://releases.hashicorp.com/terraform/1.1.9/terraform_1.1.9_linux_amd64.zip
+      - unzip terraform_1.1.9_linux_amd64.zip
+      - mv terraform /usr/local/bin/
+  pre_build:
+    commands:
+      - terraform init -input=false -no-color
+      - terraform plan -input=false -no-color
+
+  build:
+    commands:
+      - terraform apply -input=false -auto-approve -no-color
+
+  post_build:
+    commands:
+      - echo terraform apply completed on `date`
