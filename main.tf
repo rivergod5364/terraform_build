@@ -53,28 +53,6 @@ resource "aws_route_table_association" "zabbix_rt_subet_a" {
   route_table_id = aws_route_table.zabbix_rt.id # 紐付けたいルートテーブルのIDを指定
 }
 
-/*
-module "vpc" {
-  source  = "terraform-aws-modules/vpc/aws"
-  version = "3.11.3"
-  name    = "vpc_apache"
-  cidr    = "10.0.0.0/16"
-
-  azs            = ["ap-northeast-1a"]
-  public_subnets = ["10.0.1.0/24"]
-
-  enable_nat_gateway = false
-  enable_vpn_gateway = false
-
-  enable_dns_hostnames = true
-
-  tags = {
-    Terraform   = "true"
-    Environment = "dev"
-  }
-}
-*/
-
 module "security_group" {
   source  = "terraform-aws-modules/security-group/aws"
   version = "4.8.0"
@@ -88,23 +66,12 @@ module "security_group" {
   egress_rules        = ["all-all"]
 }
 
-module "ssh_key_pair" {
-  source                = "git::https://github.com/cloudposse/terraform-aws-key-pair.git?ref=master"
-  namespace             = "test"
-  stage                 = "dev"
-  name                  = "apache"
-  ssh_public_key_path   = "/secrets"
-  generate_ssh_key      = "true"
-  private_key_extension = ".pem"
-  public_key_extension  = ".pub"
-}
-
 # EC2作成(public側)
 resource "aws_instance" "ec2_apache_server" {
   ami                     = "ami-00c8dfcb0b542ee0c"
   instance_type           = "t2.micro"
   disable_api_termination = false
-  key_name = module.ssh_key_pair.key_name
+  key_name               = "ELB-test"
   vpc_security_group_ids  = [module.security_group.security_group_id]
   subnet_id               = aws_subnet.zabbix_subnet_a.id
  
@@ -112,28 +79,3 @@ resource "aws_instance" "ec2_apache_server" {
     Name = "ec2_apache"
   }
 }
-/*
-module "ec2_apache_server" {
-  source         = "terraform-aws-modules/ec2-instance/aws"
-  version        = "3.4.0"
-  name           = "ec2_apache"
-
-  ami                    = var.ami_redhat8
-  instance_type          = var.ami_redhat8_instance_type
-  key_name               = module.ssh_key_pair.key_name
-  monitoring             = true
-  vpc_security_group_ids = [module.security_group.security_group_id]
-  subnet_id              = aws_subnet.zabbix_subnet_a.id
-
-  root_block_device = [
-    {
-      delete_on_termination = "true"
-    }
-  ]
-
-  tags = {
-    Terraform   = "true"
-    Environment = "dev"
-  }
-}
-*/
